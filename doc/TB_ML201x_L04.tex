@@ -1,0 +1,169 @@
+\documentclass[12pt]{article}
+
+\usepackage[utf8x]{inputenc}%
+\usepackage[romanian]{babel}%
+\usepackage{color}%
+\usepackage{algorithm}%
+\usepackage{algorithmic}%
+\usepackage{hyperref}%
+\usepackage{amsmath}%
+\usepackage{graphicx}%
+\usepackage{ftnxtra}%
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{float}
+
+\floatname{algorithm}{Algoritmul}
+\renewcommand{\algorithmicforall}{\textbf{pentru toate}}
+\renewcommand{\algorithmicdo}{\textbf{execută}}
+\renewcommand{\algorithmicuntil}{\textbf{până când}}
+\renewcommand{\algorithmicend}{\textbf{termină}}
+\renewcommand{\algorithmicif}{\textbf{dacă}}
+\renewcommand{\algorithmicelse}{\textbf{altfel}}
+\renewcommand{\algorithmicfor}{\textbf{ciclu}}
+\renewcommand{\algorithmicthen}{\textbf{atunci}}
+\renewcommand{\algorithmicrepeat}{\textbf{repetă}}
+\renewcommand{\algorithmicendfor}{\algorithmicend\ \algorithmicfor}
+\renewcommand{\algorithmicrequire}{\textbf{Intrări:}}
+\renewcommand{\algorithmicensure}{\textbf{Ieșire:}}
+
+
+\title{Învățare Automată - Laboratorul 6 \\ \textbf{Rețele Hopfield}}%
+\author{Tudor Berariu \\ {\small Laboratorul AIMAS} \\ {\small
+    Facultatea de Automatică și Calculatoare}}%
+
+\begin{document}
+\maketitle%
+
+\section{Scopul laboratorului}
+\label{sec:goals}
+
+Scopul laboratorului îl reprezintă înțelegerea și implementarea unei
+rețele Hopfield.
+
+\section{Rețele Hopfield}
+\label{sec:intro}
+
+O rețea Hopfield este o rețea \emph{asincronă} cu $n$ neuroni, total
+conectată (fiecare neuron are intrările conectate la ieșirile tuturor
+celorlalți $n-1$ neuroni). O rețea este asincronă facă fiecare unitate
+(neuron) își actualizează starea la momente de timp aleatoare,
+independent de timpii de actualizare ale cerlolalte unități.
+
+Într-o rețea Hopfield \emph{funcția de activare} (actualizare) pentru
+un neuron este cea din Formula~\ref{eq:activation}.
+
+\begin{equation}
+  \label{eq:activation}
+  x_i \longleftarrow sgn \Big( \displaystyle\sum_{j=1}^{n}w_{ij}x_j \Big)
+\end{equation}
+
+Utilizând principiul lui Hebb, o rețea Hopfield poate fi folosită ca o
+memorie asociativă pentru a reține un număr de șabloane binare (un
+șablon va fi format din $n$ valori din mulțimea $\lbrace -1, 1
+\rbrace$). Ponderile unei rețele Hopfield se calculează pe baza celor
+$m$ șablaone $(\mathbf{s}^i,1 \le i \le m)$ conform
+Formulei~\ref{eq:hebb} (învățare hebbiană).
+
+\begin{equation}
+  \label{eq:hebb}
+  \mathbf{W} = \displaystyle\sum_{i=1}^m \mathbf{s}^i \cdot (\mathbf{s}^i)^T
+  \; - \; m\mathbf{I}
+\end{equation}
+
+Atenție: $w_{ii} = 0, \forall i \in \lbrace 1 \ldots n \rbrace$.
+
+Pentru a folosi rețeaua ca un clasificator, după ce aceasta a fost
+\emph{antrenată} (Formula~\ref{eq:hebb}), se utilizează
+Algoritmul~\ref{alg:recognition}.
+
+\begin{algorithm}
+  \caption{Recunoașterea șabloanelor}
+  \label{alg:recognition}
+  \begin{algorithmic}[1]
+    \REQUIRE ponderile rețelei $W$, șablonul nou $t$%
+    \ENSURE șablonul recunoscut $s$%
+    \STATE $s \longleftarrow t$%
+    \REPEAT%
+    \STATE alege aleator un neuron $i$%
+    \STATE $s_i \longleftarrow sgn\Big(\displaystyle\sum_{j=1}^{n} w_{ij}s_j\Big)$%
+    \UNTIL{stările de activare ale neuronilor nu se mai schimbă}%
+  \end{algorithmic}
+\end{algorithm}
+
+\section{Cerințe}
+\label{sec:tasks}
+
+În cadrul acestui laborator se va implementa o rețea Hopfield pentru a
+recunoate imagini ce reprezintă cifrele de la 0 la 9. O imagine este
+formată din $10\times12$ pixeli, precum cea de mai jos
+\begin{verbatim}
+__xxxxxxxx__
+__xxxxxxxxx_
+________xxx_
+________xxx_
+___xxxxxxx__
+___xxxxxxx__
+________xxx_
+________xxx_
+__xxxxxxxxx_
+__xxxxxxxx__
+\end{verbatim}
+
+Limbajul de programare este la alegere, dar pentru Python, C++ și
+Octave există un schelet de cod cu următoarele funcții implementate:
+
+\begin{itemize}
+\item \texttt{read\_digits(m)} - citește primele $m$ șabloane din
+  fișierul \texttt{digits}
+  \begin{itemize}
+  \item fiecare șablon este memorat ca un vector / listă de lungime
+    120 conținând doar valori 1 și -1
+  \item rezultatul funcției este o colecție de $m$ astfel de vectori
+    (o matrice $m \times 120$ cu șabloanele pe linii)
+  \end{itemize}
+\item \texttt{print\_digit(d)} - afișează un șablon
+\item \texttt{add\_noise(pattern, noise)} - întoarce un șablon nou
+  adăugând zgomot unui șablon original
+  \begin{itemize}
+  \item $0 \le noise \le 1$ reprezintă probabilitatea cu care un
+    \emph{pixel} al șablonului este schimbat din 1 în -1 și invers
+  \end{itemize}
+\end{itemize}
+
+\subsection*{Cerințe}
+\label{sec:tasks10}
+
+Implementați următoarele funcții:
+\begin{enumerate}
+\item \texttt{compute\_weights(patterns)} - în care calculați
+  ponderile unei rețele Hopfield pentru șabloanele primite.
+\item \texttt{converge(weigths, new\_pattern)} - în care implementați
+  algoritmul de recunoaștere a șabloanelor pentru rețele Hopfield.
+\item \texttt{compute\_accuracy(patterns, noise)} - în care construiți
+  o rețea Hopfield care să memoreze șabloanele \texttt{patterns},
+  generați imagini noi adăugând zgomot celor originale și testați
+  capacitatea rețelei de a reface șablonul inițial.
+\end{enumerate}
+
+\subsection*{Bonus}
+\label{sec:bonus}
+
+\begin{enumerate}
+\item Construiți un grafic al variației acurateței clasificării în
+  funcție de nivelul de zgomot. Fixați mai multe valori pentru numărul
+  de șabloane învățate și adăugați câte o linie în grafic pentru
+  fiecare.
+\item Construiți un grafic al variației acurateței clasificării în
+  funcție de numărul de șabloane învățate. Fixați mai multe valori
+  pentru nivelul de zgomot adăugat la recunoaștere și adăugați câte o
+  linie în grafic pentru fiecare dintre acestea.
+\end{enumerate}
+
+\subsection*{Arhiva}
+\label{zip-archive}
+
+Arhiva conține schelet de cod în Octave (sau Matlab), C++11 și Python.
+
+\end{document}
